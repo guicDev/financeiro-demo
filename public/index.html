@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Controle de Notas</title>
+    <link rel="stylesheet" href="assets/css/styles.css?v=ofx-completo-20261125-categorias-unified">
+      <link rel="stylesheet" href="assets/demo/demo.css">
+  </head>
+  <body>
+    <div id="app" class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark brand-logo-mark">
+            <img src="assets/img/logo-demo.svg" alt="Controle financeiro demonstrativo">
+          </span>
+          <div>
+            <strong>Controle de notas</strong>
+            <small id="userBadge">Carregando sua sess&atilde;o...</small>
+          </div>
+        </div>
+        <nav class="nav" aria-label="Navega&ccedil;&atilde;o principal">
+          <button class="nav-link active" data-view="dashboard" type="button">Dashboard</button>
+          <button class="nav-link" data-view="notas" type="button">Notas</button>
+          <button class="nav-link" data-view="cadastro" type="button">Cadastrar nota</button>
+          <button class="nav-link" data-view="pagar-hoje" type="button">Pagar hoje</button>
+          <button id="conciliacaoNav" class="nav-link" data-view="conciliacao" type="button" hidden>Conciliação OFX</button>
+          <button id="recebiveisNav" class="nav-link" data-view="recebiveis" type="button" hidden>Contas a receber</button>
+          <button id="custosFixosNav" class="nav-link" data-view="custos-fixos" type="button" hidden>Custos fixos</button>
+          <button class="nav-link" data-view="relatorios" type="button">Relat&oacute;rios</button>
+          <button id="historicoNav" class="nav-link" data-view="historico" type="button" hidden>Hist&oacute;rico</button>
+          <button id="empresasNav" class="nav-link" data-view="empresas" type="button" hidden>Empresas</button>
+          <button id="categoriasNav" class="nav-link" data-view="categorias" type="button" hidden>Categorias</button>
+        </nav>
+        <button id="logoutButton" class="ghost-button" type="button">Sair</button>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow" id="sectionEyebrow">Vis&atilde;o geral</p>
+            <h1 id="pageTitle">Dashboard</h1>
+          </div>
+          <div class="topbar-actions">
+            <label class="company-context">
+              Empresa selecionada
+              <select id="empresaGlobal" aria-label="Empresa selecionada">
+                <option value="">Todas as empresas</option>
+              </select>
+            </label>
+            <button class="primary-button mobile-new" data-view-link="cadastro" type="button">Nova nota</button>
+          </div>
+        </header>
+
+        <section id="alertArea" class="alert-area" aria-live="polite"></section>
+        <section id="empresaContextNotice" class="context-notice" hidden>
+          <div>
+            <strong>Selecione uma empresa para continuar.</strong>
+            <span>Dashboard, notas, pagamentos e relat&oacute;rios sempre usam a empresa selecionada.</span>
+          </div>
+          <button id="empresaContextAction" class="secondary-button" data-view-link="empresas" type="button" hidden>Cadastrar empresa</button>
+        </section>
+
+        <section id="dashboardView" class="view active-view">
+          <div class="metrics-grid" id="dashboardMetrics"></div>
+          <div class="content-grid">
+            <section class="panel">
+              <div class="panel-header">
+                <h2>Vencimentos pr&oacute;ximos</h2>
+                <button class="text-button" data-view-link="pagar-hoje" type="button">Ver rotina</button>
+              </div>
+              <div id="dashboardDueList" class="stack-list"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-header">
+                <h2>Previs&atilde;o de gastos</h2>
+              </div>
+              <div id="dashboardStatusList" class="status-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="recebiveisView" class="view">
+          <section class="panel">
+            <div class="panel-header"><div><h2>Contas a receber e bancos</h2><p class="meta">Cadastre as contas, confira os créditos do OFX e acompanhe o que cada cliente ainda deve.</p></div><a id="recebiveisCsv" class="secondary-button" href="#">Baixar relatório CSV</a></div>
+            <p id="recebiveisResumo" class="meta" aria-live="polite"></p>
+          </section>
+          <section class="panel">
+            <div class="panel-header"><h2>Contas bancárias</h2></div>
+            <p class="meta">O saldo considera os movimentos OFX importados. Confira se o extrato está completo.</p>
+            <form id="recebiveisBancoForm" class="form-grid compact">
+              <input type="hidden" name="id"><input type="hidden" name="conta_hash">
+              <label>Identificação da conta<input name="nome" maxlength="120" required placeholder="Ex.: Banco X — conta 1234"></label>
+              <label>Código do banco<input name="banco_codigo" maxlength="40" placeholder="Ex.: 341"></label>
+              <label>Agência<input name="agencia" maxlength="40"></label>
+              <label>Número da conta<input name="numero" maxlength="80"></label>
+              <div class="span-2"><button class="primary-button" type="submit">Salvar conta</button> <button id="recebiveisBancoLimpar" class="secondary-button" type="button">Limpar</button></div>
+            </form>
+            <div id="recebiveisBancos" class="stack-list"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-header"><h2>Clientes e valores a receber</h2></div>
+            <form id="recebiveisClienteForm" class="form-grid compact">
+              <label>Nome do cliente<input name="nome" maxlength="200" required></label>
+              <label>CPF/CNPJ (opcional)<input name="documento" maxlength="30"></label>
+              <div class="span-2"><button class="secondary-button" type="submit">Cadastrar cliente</button></div>
+            </form>
+            <form id="recebiveisTituloForm" class="form-grid compact">
+              <label>Cliente<select name="cliente_id" id="recebiveisClienteSelect" required></select></label>
+              <label>Descrição<input name="descricao" maxlength="200" required></label>
+              <label>Valor (R$)<input name="valor" type="number" min="0.01" step="0.01" required></label>
+              <label>Vencimento<input name="vencimento" type="date" required></label>
+              <div class="span-2"><button class="primary-button" type="submit">Cadastrar conta a receber</button></div>
+            </form>
+            <div id="recebiveisTitulos" class="stack-list"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-header"><div><h2>Conferência de entradas no OFX</h2><p class="meta">Créditos podem quitar uma conta, criar uma nova conta ou ser classificados. Transferências ligam um débito ao crédito de outra conta própria.</p></div><button id="recebiveisAtualizar" class="secondary-button" type="button">Atualizar</button></div>
+            <label>Buscar movimento<input id="recebiveisBusca" type="search" placeholder="Descrição, conta ou ID"></label>
+            <div id="recebiveisMovimentos" class="stack-list"></div>
+          </section>
+        </section>
+
+        <section id="conciliacaoView" class="view">
+          <div class="work-tabs" role="tablist" aria-label="Áreas da conciliação">
+            <button id="ofxTab" class="work-tab" type="button" role="tab" aria-selected="true" aria-controls="ofxPane" tabindex="0" data-conciliacao-tab="ofx">Extrato OFX</button>
+            <button id="fiscalTab" class="work-tab" type="button" role="tab" aria-selected="false" aria-controls="fiscalPane" tabindex="-1" data-conciliacao-tab="fiscal">NFS-e tomadas</button>
+            <button id="nfceTab" class="work-tab" type="button" role="tab" aria-selected="false" aria-controls="nfcePane" tabindex="-1" data-conciliacao-tab="nfce">NFC-e AM</button>
+          </div>
+          <div id="ofxPane" role="tabpanel" aria-labelledby="ofxTab">
+          <section class="panel">
+            <div class="panel-header">
+              <div><h2>Importar extrato bancário</h2><p class="meta">Os débitos só marcam uma parcela como paga depois da sua confirmação.</p></div>
+            </div>
+            <form id="ofxForm" class="form-grid compact">
+              <label>Arquivo OFX<input name="ofx" type="file" accept=".ofx" required></label>
+              <label>Identificação da conta (se não vier no arquivo)<input name="conta_nome" maxlength="80" placeholder="Ex.: Banco X — conta final 1234"></label>
+              <div class="span-2"><button class="primary-button" type="submit">Importar extrato</button></div>
+            </form>
+          </section>
+          <section class="panel">
+            <div class="panel-header"><div><h2>Movimentos importados</h2><p class="meta">Sugestões usam valor exato e priorizam vencimentos próximos. Confira antes de conciliar.</p></div><button id="atualizarExtratos" class="secondary-button" type="button">Atualizar</button></div>
+            <div class="work-filters" id="ofxEscolha">
+              <label>Conta<select id="ofxConta"><option value="">Escolha a conta</option></select></label>
+              <label>Período<select id="ofxPeriodo" disabled><option value="">Escolha o período</option></select></label>
+              <label id="ofxArquivoLabel" hidden>Arquivo OFX<select id="ofxArquivo"><option value="">Escolha o arquivo</option></select></label>
+            </div>
+            <p id="ofxEscolhaAviso" class="meta" aria-live="polite"></p>
+            <form id="ofxFiltros" class="work-filters">
+              <label>Situação<select name="status"><option value="pendente">Pendentes</option><option value="conciliado">Conciliados</option><option value="ignorado">Ignorados</option><option value="todos">Todas</option></select></label>
+              <label>Tipo<select name="tipo"><option value="debito">Débitos</option><option value="credito">Créditos</option><option value="todos">Todos</option></select></label>
+              <label>De<input name="de" type="date"></label><label>Até<input name="ate" type="date"></label>
+              <label>Buscar<input name="busca" type="search" placeholder="Descrição ou valor"></label>
+              <button class="secondary-button" type="submit">Filtrar</button>
+            </form>
+            <p id="ofxCount" class="meta" aria-live="polite"></p>
+            <div id="extratosLista" class="stack-list"><div class="empty-state">Selecione uma empresa ativa para consultar os extratos.</div></div>
+            <button id="ofxCarregarMais" class="secondary-button" type="button" hidden>Carregar mais movimentos</button>
+          </section>
+          <dialog id="ofxBancoDialog" class="ofx-bank-dialog" aria-labelledby="ofxBancoTitulo">
+            <h2 id="ofxBancoTitulo">Cadastrar conta bancária</h2>
+            <p>Esta conta do OFX precisa ser cadastrada para mostrar os movimentos.</p>
+            <form id="ofxBancoForm" class="form-grid compact">
+              <input name="conta_hash" type="hidden">
+              <label>Banco<input name="banco_codigo" maxlength="40"></label>
+              <label>Número da conta<input name="numero" maxlength="80"></label>
+              <label>Identificação<input name="nome" maxlength="120" required></label>
+              <label>Agência<input name="agencia" maxlength="40"></label>
+              <div class="span-2"><button class="primary-button" type="submit">Cadastrar conta</button> <button id="ofxBancoCancelar" class="secondary-button" type="button">Fechar</button></div>
+            </form>
+          </dialog>
+          </div>
+          <div id="fiscalPane" role="tabpanel" aria-labelledby="fiscalTab" hidden>
+          <section class="panel">
+            <div class="panel-header"><div><h2>NFS-e de serviços tomados</h2><p class="meta">A captura não cria pagamento. Confira a nota e o vencimento antes de vinculá-la a uma conta.</p></div><button id="sincronizarFiscal" class="secondary-button" type="button">Buscar novas NFS-e</button></div>
+            <p id="fiscalStatus" class="meta" aria-live="polite"></p>
+            <form id="fiscalFiltros" class="work-filters">
+              <label>Situação<select name="situacao"><option value="pendente">Pendentes</option><option value="vinculado">Vinculadas</option><option value="ignorado">Sem conta</option><option value="cancelado">Canceladas</option><option value="todas">Todas</option></select></label>
+              <label>Emissão de<input name="de" type="date"></label><label>Até<input name="ate" type="date"></label>
+              <label>Buscar<input name="busca" type="search" placeholder="Fornecedor, número ou chave"></label>
+              <button class="secondary-button" type="submit">Filtrar</button>
+            </form>
+            <p id="fiscalCount" class="meta" aria-live="polite"></p>
+            <div id="documentosFiscaisLista" class="stack-list"><div class="empty-state">Selecione uma empresa para consultar as NFS-e.</div></div>
+            <button id="fiscalCarregarMais" class="secondary-button" type="button" hidden>Carregar mais NFS-e</button>
+          </section>
+          </div>
+          <div id="nfcePane" role="tabpanel" aria-labelledby="nfceTab" hidden>
+            <section class="panel">
+              <div class="panel-header"><div><h2>NFC-e do Amazonas</h2><p class="meta">Importe XML de NFC-e emitida para o CNPJ da empresa. Esta conferência não cria conta nem marca pagamento. Confirme a autenticidade no portal da SEFAZ-AM.</p></div></div>
+              <form id="nfceForm" class="form-grid compact">
+                <label>Arquivo XML da NFC-e<input name="xml" type="file" accept=".xml,application/xml,text/xml" required></label>
+                <div><button class="primary-button" type="submit">Importar NFC-e</button></div>
+              </form>
+              <p id="nfceCount" class="meta" aria-live="polite"></p>
+              <div id="nfceLista" class="stack-list"><div class="empty-state">Selecione uma empresa para consultar as NFC-e importadas.</div></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="notasView" class="view">
+          <div class="filters">
+            <label>
+              Buscar
+              <input id="notaBusca" type="search" placeholder="Fornecedor, n&uacute;mero ou CNPJ/CPF">
+            </label>
+            <label>
+              Status
+              <select id="notaStatus">
+                <option value="">Todos</option>
+                <option value="aberta">Aberta</option>
+                <option value="parcial">Parcial</option>
+                <option value="vencida">Vencidas</option>
+                <option value="paga">Paga</option>
+                <option value="cancelada">Cancelada</option>
+              </select>
+            </label>
+            <label>
+              Vencimento inicial
+              <input id="notaInicio" type="date">
+            </label>
+            <label>
+              Vencimento final
+              <input id="notaFim" type="date">
+            </label>
+            <label class="card-check-option"><input id="notaMostrarParcela" type="checkbox" checked>Mostrar valor da parcela</label>
+            <button id="buscarNotas" class="secondary-button" type="button">Filtrar</button>
+            <button id="limparFiltrosNotas" class="ghost-button" type="button">Limpar filtros</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Empresa</th>
+                  <th>Nota</th>
+                  <th>Fornecedor</th>
+              <th>Emiss&atilde;o</th>
+                  <th id="notaValorHeader">Valor da parcela</th>
+                  <th>Status</th>
+              <th>A&ccedil;&otilde;es</th>
+                </tr>
+              </thead>
+              <tbody id="notasTable"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="cadastroView" class="view">
+          <form id="notaForm" class="form-layout" enctype="multipart/form-data">
+            <section class="panel form-panel">
+              <div class="panel-header">
+                <h2>Dados da nota</h2>
+              </div>
+              <div class="form-grid">
+                <label>Empresa
+                  <select id="notaEmpresa" name="empresa_id" required>
+                    <option value="">Selecione uma empresa</option>
+                  </select>
+                </label>
+                <label id="numeroNotaLabel">N&uacute;mero da nota<input name="numero_nota" required></label>
+                <label>Fornecedor<input name="fornecedor" required></label>
+                <label>CNPJ/CPF<input name="cnpj_cpf" list="documentosFornecedor"><datalist id="documentosFornecedor"></datalist></label>
+                <label id="dataEmissaoLabel">Data de emiss&atilde;o<input name="data_emissao" type="date"></label>
+                <label id="valorTotalLabel">Valor total<input name="valor_total" inputmode="decimal" placeholder="0,00" required></label>
+                <label class="categoria-field">Categoria
+                  <input name="categoria" data-categoria-text>
+                  <input name="categoria_id" type="hidden" data-categoria-id>
+                  <span data-categoria-picker hidden><input type="search" data-categoria-search placeholder="Digite para buscar categoria" aria-label="Categoria de despesa" autocomplete="off"><span data-categoria-options class="categoria-options" role="listbox" hidden></span></span>
+                  <small class="meta" data-categoria-hint></small>
+                </label>
+                <label>Centro de custo<input name="centro_custo"></label>
+                <label>Forma de pagamento
+                  <select id="formaPagamento" name="forma_pagamento" required>
+                    <option value="pix">PIX</option>
+                    <option value="boleto">Boleto</option>
+                    <option value="cartao_credito">Cartão de crédito</option>
+                    <option value="nao_informado">Não informado</option>
+                  </select>
+                </label>
+                <label id="numeroParcelasField">N&uacute;mero de parcelas<input id="numeroParcelas" name="numero_parcelas" type="number" min="1" max="120" value="1" required></label>
+                <label id="primeiroVencimentoField">Primeiro vencimento<input id="primeiroVencimento" name="primeiro_vencimento" type="date"></label>
+                <label id="faturaField" hidden>Vencimento da fatura<input id="dataVencimentoFatura" name="data_vencimento_fatura" type="date"></label>
+                <label id="cartaoFinalField" hidden>Últimos 4 dígitos do cartão<input id="cartaoFinal" name="cartao_final" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="Ex.: 1234"><small id="cartaoFinalHint" class="meta" hidden></small></label>
+                <label>Anexo da nota<input name="anexo_nota" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp"></label>
+                <label class="span-2">Observa&ccedil;&otilde;es<textarea name="observacoes" rows="3" placeholder="Algum detalhe importante para o financeiro?"></textarea></label>
+                <label class="span-2 checkbox-label"><input id="notaRecorrente" type="checkbox"> Repetir esta nota com datas e valores edit&aacute;veis</label>
+              </div>
+            </section>
+            <section id="recorrenciaPanel" class="panel form-panel" hidden>
+              <div class="panel-header">
+                <div><h2>Ocorr&ecirc;ncias da s&eacute;rie</h2><p class="meta">Cada repetição cria uma nota com uma parcela. Para dividir uma única nota, use Número de parcelas com a opção Repetir desmarcada.</p></div>
+                <div class="item-actions"><label>Quantidade de notas a repetir<input id="recorrenciaQuantidade" type="number" min="1" max="120" value="1"></label><button id="gerarOcorrencias" class="secondary-button" type="button">Gerar linhas</button></div>
+              </div>
+              <div id="ocorrenciasFields" class="parcelas-fields"></div>
+              <p class="meta">Os campos do topo serao aplicados a toda a serie. Emissao, vencimento e valor de cada linha permanecem individuais.</p>
+              <div class="form-actions"><button id="adicionarOcorrencia" class="secondary-button" type="button">Adicionar ocorr&ecirc;ncia</button></div>
+              <div id="serieRemovalActions" class="form-actions" hidden><button id="corrigirQuantidadeSerie" class="secondary-button" type="button">Corrigir quantidade</button><button id="excluirSerieInteira" class="ghost-button" type="button">Excluir série inteira</button></div>
+            </section>
+            <section id="parcelasPanel" class="panel form-panel">
+              <div class="panel-header">
+                <h2>Parcelas</h2>
+                <button id="gerarParcelas" class="secondary-button" type="button">Gerar parcelas</button>
+              </div>
+              <div id="parcelasFields" class="parcelas-fields"></div>
+              <small id="parcelasTotalHint" class="meta"></small>
+            </section>
+            <div class="form-actions">
+              <button class="primary-button" type="submit">Salvar nota</button>
+              <button class="ghost-button" type="reset">Limpar</button>
+            </div>
+          </form>
+        </section>
+
+        <section id="detalhesView" class="view">
+          <div id="detalhesContent"></div>
+        </section>
+
+        <section id="pagarHojeView" class="view">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Parcelas para pagar hoje</h2>
+              <button id="atualizarPagarHoje" class="secondary-button" type="button">Atualizar</button>
+            </div>
+            <div class="filters routine-filters">
+              <label>
+                Forma de pagamento
+                <select id="pagarHojeForma">
+                  <option value="">Todas</option>
+                  <option value="pix">PIX</option>
+                  <option value="boleto">Boleto</option>
+                  <option value="cartao_credito">Cartão de crédito</option>
+                </select>
+              </label>
+              <article class="metric-card inline-metric">
+                <span>Total do dia</span>
+                <strong id="pagarHojeTotal">R$ 0,00</strong>
+              </article>
+            </div>
+            <div id="pagarHojeList" class="stack-list"></div>
+          </div>
+        </section>
+
+        <section id="custosfixosView" class="view">
+          <div class="content-grid">
+            <section id="custoFixoFormPanel" class="panel form-panel">
+              <div class="panel-header"><h2>Novo custo fixo mensal</h2></div>
+              <form id="custoFixoForm" class="form-layout">
+                <div class="form-grid compact">
+                  <label>Empresa<select id="custoFixoEmpresa" name="empresa_id" required><option value="">Selecione uma empresa</option></select></label>
+                  <label>Descri&ccedil;&atilde;o da recorr&ecirc;ncia<input name="descricao" required maxlength="160" placeholder="Ex.: Aluguel do galp&atilde;o"></label>
+                  <label>Fornecedor<input name="fornecedor" required maxlength="160"></label>
+                  <label>CNPJ/CPF<input name="cnpj_cpf"></label>
+                  <label>Valor inicial previsto<input name="valor_mensal" inputmode="decimal" placeholder="0,00" required></label>
+                  <label>Dia padr&atilde;o de vencimento<input name="dia_vencimento" type="number" min="1" max="31" required></label>
+                  <label>M&ecirc;s inicial<input id="custoFixoInicio" name="inicio_mes" type="month" required></label>
+                  <label>Forma de pagamento<select name="forma_pagamento"><option value="pix">PIX</option><option value="boleto">Boleto</option><option value="cartao_credito">Cartão de crédito</option><option value="nao_informado">Não informado</option></select></label>
+                  <label id="custoFixoCartaoFinalField" hidden>Últimos 4 dígitos do cartão<input id="custoFixoCartaoFinal" name="cartao_final" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="Ex.: 1234"><small id="custoFixoCartaoFinalHint" class="meta" hidden></small></label>
+                  <label class="categoria-field">Categoria
+                    <input name="categoria" data-categoria-text>
+                    <input name="categoria_id" type="hidden" data-categoria-id>
+                    <span data-categoria-picker hidden><input type="search" data-categoria-search placeholder="Digite para buscar categoria" aria-label="Categoria de despesa" autocomplete="off"><span data-categoria-options class="categoria-options" role="listbox" hidden></span></span>
+                    <small class="meta" data-categoria-hint></small>
+                  </label>
+                  <label>Centro de custo<input name="centro_custo"></label>
+                  <label class="span-2">Observa&ccedil;&otilde;es<textarea name="observacoes" rows="2"></textarea></label>
+                </div>
+                <p class="meta">O sistema cria uma nota por m&ecirc;s. Depois, abra as compet&ecirc;ncias para ajustar valor ou vencimento de um m&ecirc;s sem alterar os demais.</p>
+                <div class="form-actions"><button class="primary-button" type="submit">Cadastrar custo fixo</button></div>
+              </form>
+            </section>
+            <section class="panel">
+              <div class="panel-header"><h2>Custos fixos mensais</h2><button id="atualizarCustosFixos" class="secondary-button" type="button">Atualizar</button></div>
+              <div id="custosFixosList" class="stack-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="relatoriosView" class="view">
+          <div class="report-grid">
+            <section class="panel">
+              <h2>Filtros dos relat&oacute;rios</h2>
+              <div class="form-grid compact">
+                <label>Forma de pagamento
+                  <select id="relFormaPagamento">
+                    <option value="">Todas</option>
+                    <option value="pix">PIX</option>
+                    <option value="boleto">Boleto</option>
+                    <option value="cartao_credito">Cartão de crédito</option>
+                  </select>
+                </label>
+                <label>Status
+                  <select id="relStatus">
+                    <option value="">Todos</option>
+                    <option value="a_vencer">A vencer</option>
+                    <option value="vence_hoje">Vence hoje</option>
+                    <option value="vencida">Vencida</option>
+                    <option value="paga">Paga</option>
+                    <option value="aberta">Nota aberta</option>
+                    <option value="parcial">Nota parcial</option>
+                    <option value="cancelada">Nota cancelada</option>
+                  </select>
+                </label>
+                <label class="span-2">Centro de custo<input id="relCentroCusto" placeholder="Centro de custo"></label>
+              </div>
+            </section>
+            <section class="panel">
+              <h2>Relat&oacute;rio geral</h2>
+              <p>Baixe todas as notas e parcelas permitidas para seu usu&aacute;rio.</p>
+              <button class="primary-button" data-report="/api/relatorios/geral.xlsx" type="button">Baixar XLSX</button>
+            </section>
+            <section class="panel">
+              <h2>Por per&iacute;odo</h2>
+              <div class="form-grid compact">
+                <label>In&iacute;cio<input id="relPeriodoInicio" type="date"></label>
+                <label>Fim<input id="relPeriodoFim" type="date"></label>
+              </div>
+              <button class="primary-button" data-report="/api/relatorios/periodo.xlsx" data-fields="relPeriodoInicio:inicio,relPeriodoFim:fim" type="button">Baixar XLSX</button>
+            </section>
+            <section class="panel">
+              <h2>Por fornecedor</h2>
+              <label>Fornecedor<input id="relFornecedor" placeholder="Nome ou documento"></label>
+              <button class="primary-button" data-report="/api/relatorios/fornecedor.xlsx" data-fields="relFornecedor:fornecedor" type="button">Baixar XLSX</button>
+            </section>
+            <section class="panel">
+              <h2>Por dia</h2>
+              <label>Dia<input id="relDia" type="date"></label>
+              <button class="primary-button" data-report="/api/relatorios/dia.xlsx" data-fields="relDia:data" type="button">Baixar XLSX</button>
+            </section>
+            <section class="panel">
+              <h2>Mensal</h2>
+              <label>Mês<input id="relMes" type="month"></label>
+              <button class="primary-button" data-report="/api/relatorios/mensal.xlsx" data-fields="relMes:mes" type="button">Baixar XLSX</button>
+            </section>
+            <section class="panel">
+              <h2>Fluxo de caixa futuro</h2>
+              <p>Baixe as parcelas em aberto, j&aacute; ordenadas por vencimento.</p>
+              <button class="primary-button" data-report="/api/relatorios/fluxo-caixa.xlsx" type="button">Baixar XLSX</button>
+            </section>
+            <section class="panel">
+              <h2>Cartão de crédito</h2>
+              <div class="form-grid compact">
+                <div class="span-2" role="group" aria-labelledby="relCartoesTitulo">
+                  <span id="relCartoesTitulo" class="field-label">Cartões</span>
+                  <input id="relCartoes" type="hidden" value="">
+                  <div class="card-checklist">
+                    <label class="card-check-option card-check-all"><input id="relTodosCartoes" type="checkbox" checked>Todos os cartões</label>
+                    <div id="relCartoesLista" class="card-check-options" aria-label="Selecione os cartões para o relatório"></div>
+                  </div>
+                  <small class="meta">Desmarque “Todos os cartões” para escolher um ou mais finais.</small>
+                </div>
+                <label>Data inicial do gasto<input id="relCartaoInicio" type="date"></label>
+                <label>Data final do gasto<input id="relCartaoFim" type="date"></label>
+                <label class="span-2">Vencimento da fatura<input id="relCartaoVencimento" type="month"></label>
+                <label class="span-2">Ordenar planilha por<select id="relCartaoOrdenacao">
+                  <option value="data_compra_asc">Data da compra — mais antiga primeiro</option>
+                  <option value="data_compra_desc">Data da compra — mais recente primeiro</option>
+                  <option value="cartao">Por cartão — todas as compras de um cartão, depois o próximo</option>
+                  <option value="cartao_valor_desc">Cartão → valor — maiores gastos primeiro em cada cartão</option>
+                  <option value="valor_desc">Valor — maior para menor</option>
+                  <option value="centro_custo">Centro de custo → data da compra</option>
+                  <option value="fornecedor">Fornecedor/descrição — ordem alfabética</option>
+                </select></label>
+                <small class="meta span-2">O período considera a data de emissão da compra. Selecione o mês da fatura para mostrar somente as parcelas com vencimento nele.</small>
+              </div>
+              <button class="primary-button" data-report="/api/relatorios/cartao-credito.xlsx" data-fields="relCartoes:cartoes,relCartaoInicio:gasto_inicio,relCartaoFim:gasto_fim,relCartaoVencimento:vencimento_mes,relCartaoOrdenacao:ordenacao" type="button">Baixar XLSX</button>
+            </section>
+          </div>
+        </section>
+
+        <section id="historicoView" class="view">
+          <div class="panel">
+            <div class="panel-header">
+              <div><h2>Hist&oacute;rico de a&ccedil;&otilde;es</h2><p class="meta">Acompanhe inclus&otilde;es, pagamentos, altera&ccedil;&otilde;es e demais movimenta&ccedil;&otilde;es.</p></div>
+              <strong id="historicoTotal" class="meta">0 registros</strong>
+            </div>
+            <div id="historicoCategorias" class="history-categories" aria-label="Categorias do histórico"></div>
+            <form id="historicoFiltros" class="filters history-filters">
+              <label>Per&iacute;odo inicial<input id="historicoInicio" type="date"></label>
+              <label>Per&iacute;odo final<input id="historicoFim" type="date"></label>
+              <label>Usu&aacute;rio<select id="historicoUsuario"><option value="">Todos os usu&aacute;rios</option></select></label>
+              <label>A&ccedil;&atilde;o<select id="historicoAcao"><option value="">Todas as a&ccedil;&otilde;es</option></select></label>
+              <label class="span-2">Buscar<input id="historicoBusca" type="search" placeholder="Nota, fornecedor ou descrição"></label>
+              <div class="form-actions"><button class="secondary-button" type="submit">Filtrar</button><button id="historicoLimpar" class="ghost-button" type="button">Limpar</button></div>
+            </form>
+            <div id="historicoList" class="stack-list history-list"></div>
+            <div class="history-pagination"><button id="historicoAnterior" class="secondary-button" type="button">Anterior</button><button id="historicoProximo" class="secondary-button" type="button">Pr&oacute;ximo</button></div>
+          </div>
+        </section>
+
+        <section id="empresasView" class="view">
+          <div class="content-grid">
+            <section class="panel">
+              <div class="panel-header">
+                <h2>Cadastrar empresa</h2>
+              </div>
+              <form id="empresaForm" class="form-layout">
+                <div class="form-grid compact">
+                  <label>Nome da empresa<input name="nome" required maxlength="160"></label>
+                  <label>CNPJ<input name="cnpj" required inputmode="numeric" maxlength="18" placeholder="00.000.000/0000-00"></label>
+                </div>
+                <div class="form-actions">
+                  <button class="primary-button" type="submit">Cadastrar empresa</button>
+                </div>
+              </form>
+            </section>
+            <section class="panel">
+              <div class="panel-header">
+                <h2>Empresas cadastradas</h2>
+                <button id="atualizarEmpresas" class="secondary-button" type="button">Atualizar</button>
+              </div>
+              <div id="empresasList" class="stack-list"></div>
+            </section>
+          </div>
+        </section>
+        <section id="categoriasView" class="view">
+          <div class="content-grid">
+            <section class="panel form-panel">
+              <div class="panel-header"><h2>Nova categoria</h2></div>
+              <form id="categoriaForm" class="form-layout">
+                <div class="form-grid compact">
+                  <label>Empresa<select name="empresa_id" id="categoriaEmpresa" required></select></label>
+                  <label>Tipo<select name="tipo"><option value="Despesa">Despesa</option><option value="Receita">Receita</option></select></label>
+                  <label>Grupo<input name="grupo" required maxlength="160"></label>
+                  <label>Nome<input name="nome" required maxlength="160"></label>
+                  <label>C&oacute;digo Omie (opcional)<input name="codigo_omie"></label>
+                </div>
+                <div class="form-actions"><button class="primary-button" type="submit">Cadastrar categoria</button></div>
+              </form>
+            </section>
+            <section class="panel"><div class="panel-header"><h2>Cat&aacute;logo</h2></div><div id="categoriasList" class="stack-list"></div></section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <template id="paymentTemplate">
+      <form class="payment-form" enctype="multipart/form-data">
+        <label>Data de pagamento<input name="data_pagamento" type="date" required></label>
+        <label>Comprovante<input name="comprovante_pagamento" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp"></label>
+        <button class="primary-button" type="submit">Confirmar pagamento</button>
+      </form>
+    </template>
+
+    <script src="assets/demo/model.js"></script>
+    <script src="assets/vendor/exceljs.min.js"></script>
+    <script src="assets/demo/reports.js"></script>
+    <script src="assets/demo/browser.js"></script>
+    <script src="assets/js/api.js?v=20260921-contexto-global"></script>
+    <script src="assets/js/cartoes.js?v=20260925-identificacao"></script>
+    <script src="assets/js/auth.js?v=20260505-2"></script>
+    <script src="assets/js/empresas.js?v=20260921-contexto-global"></script>
+    <script src="assets/js/dashboard.js?v=20260917-projecao-estavel"></script>
+    <script src="assets/js/series.js?v=20261021-remocao-serie"></script>
+    <script src="assets/js/categorias.js?v=20261125-categorias-unified"></script>
+    <script src="assets/js/notas.js?v=ofx-completo-20261125-categorias"></script>
+    <script src="assets/js/detalhes.js?v=20261112-encargos-parcela"></script>
+    <script src="assets/js/relatorios.js?v=20260925-ordenacao-cartoes"></script>
+    <script src="assets/js/custosfixos.js?v=20261125-categorias"></script>
+    <script src="assets/js/historico.js?v=20260917-historico-geral"></script>
+    <script src="assets/js/conciliacao.js?v=ofx-completo-20261125-selecao-ofx"></script>
+    <script src="assets/js/recebiveis.js?v=20261109-contas-receber"></script>
+    <script src="assets/js/fiscal.js?v=20261103-conciliacao-revisao"></script>
+    <script src="assets/js/nfce-am.js?v=20261103-nfce-manual"></script>
+    <script src="assets/js/app.js?v=20261125-categorias"></script>
+  </body>
+</html>

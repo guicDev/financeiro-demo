@@ -1,45 +1,44 @@
-# Financeiro Demo
+# Controle financeiro — demonstração
 
-Demonstração interativa de controle de notas e rotina financeira, com registros inteiramente fictícios. A interface usa HTML, CSS e JavaScript, sem dependências de execução ou serviços externos.
+Versão demonstrativa com as telas completas de controle de notas, parcelas, recorrências, custos fixos, bancos, contas a receber, conciliação, documentos fiscais e relatórios. Todos os registros são fictícios. Os formulários, menus, modais, filtros e estilos da interface foram preservados.
 
-## Executar localmente
+## Executar
 
-Requer Node.js 20 ou superior. Não é necessário instalar pacotes.
+Requer Node.js 20 ou superior. Não há dependências para instalar: o pacote de exportação de planilhas está incluído em `public/assets/vendor`, com a licença correspondente.
 
 ```sh
 npm run check
 npm test
+npm run build
 npm start
 ```
 
-Abra `http://127.0.0.1:4173` e escolha **Entrar na demonstração**. A porta pode ser alterada pela variável `PORT`.
+Abra `http://127.0.0.1:4173/login.html`. Perfis demonstrativos: `admin`, `financeiro`, `compras` e `consulta`. A senha de demonstração é `demo`; ela não é persistida. O seletor de perfil no aviso superior permite explorar os menus de cada perfil. Esse acesso representa uma simulação, sem autenticação de produção.
 
-## Explorar
+## Explorar as telas
 
-- Dashboard, filtros de notas, criação e edição de notas parceladas.
-- Pagamentos fictícios, estornos e cancelamento de notas sem pagamentos.
-- Empresas independentes, inativação para consulta e categorias por empresa.
-- Custos fixos com lançamento manual de competência e proteção contra duplicação.
-- Contas a receber, confirmação de recebimentos e estornos.
-- Exemplo OFX com débito e crédito conciliáveis por valor; a desconciliação restaura o estado anterior.
-- Relatórios CSV e resumo textual da nota, gerados no navegador.
-- Histórico local das ações e restauração dos exemplos.
+Selecione uma empresa para operar. A visão consolidada permanece disponível para notas, dashboard, histórico e relatórios. Cada empresa possui notas, categorias, custos, contas bancárias, títulos e documentos próprios. Empresa inativa mantém consulta e bloqueia escrita.
 
-Todos os valores são mantidos em centavos inteiros. As datas iniciais são relativas ao dia em que os exemplos são gerados. As parcelas mensais ajustam vencimentos ao último dia válido do mês.
+Notas e recorrências usam os formulários completos. Parcelas preservam centavos, versões de edição e proteção de pagamentos. Pagamentos, estornos, juros/multa, cancelamentos, exclusões e correções de séries afetam somente os exemplos. Custos fixos projetam as próximas competências; o encerramento preserva pagamentos e remove previsões futuras.
 
-## Estado e limites
+A conciliação inclui duas contas fictícias, OFX demonstrativos, débitos conciliáveis com uma ou várias parcelas, crédito de cliente e transferência entre contas. Contas a receber permitem registro parcial, conciliação de crédito, vínculo com recebimento manual, criação a partir do crédito, classificação e reversões.
 
-Os dados ficam em `localStorage`, na chave `financeiro-demo:v1`. Cada navegador possui seu próprio estado. **Restaurar demonstração** altera somente essa chave. Sair volta para a apresentação e mantém os exemplos editados.
+Os botões **OFX fictício**, **XML fictício** e **Anexo fictício** selecionam arquivos gerados localmente nos campos originais. Depois, use o botão original do formulário. Não são aceitos arquivos reais. Os exemplos de OFX e NFC-e já começam disponíveis; reimportá-los mostra o tratamento de duplicatas.
 
-O ambiente é público e não possui autenticação real. Não use dados pessoais, financeiros ou documentos verdadeiros. Não há envio a bancos, captura fiscal, upload de arquivos reais, backup remoto, sincronização entre dispositivos ou exportação XLSX. O OFX é um exemplo fixo e sua importação é simulada; não aceita extratos enviados pelo visitante. Armazenamento bloqueado ou cheio produz erro visível e não confirma uma alteração não salva. Abas simultâneas no mesmo navegador devem ser evitadas: a última gravação substitui o estado anterior.
+A consulta de NFS-e é explicitamente simulada e usa apenas documentos fictícios locais. O XML demonstrativo não tem validade fiscal e não representa um documento fiscal autorizado. Links de consulta externa informam essa limitação, sem abrir serviços reais. A vinculação fiscal não marca pagamentos.
 
-## Build e publicação
+Os relatórios usam **XLSX verdadeiro**, mantendo colunas, título, filtros, legenda de estados, totais gerais e por categoria; o relatório de cartões inclui emissão, parcela/quantidade, ordenação e subtotais quando solicitado. O relatório de recebíveis mantém CSV. O anexo demonstrativo é um PDF válido, produzido no navegador. Nenhum arquivo recebe extensão de outro formato.
 
-```sh
-npm run build
-```
+## Dados e limites
 
-O build copia uma lista explícita de cinco arquivos para `dist`. Não há banco ou backend no pacote publicado.
+O estado fica somente em `localStorage`, na chave `financeiro-demonstracao:v2:estado`. Os filtros auxiliares usam o mesmo prefixo exclusivo. **Restaurar demonstração** reinicia somente os exemplos e os filtros deste projeto; sair mantém as alterações locais. Datas iniciais são relativas ao dia da restauração. Visitantes em navegadores diferentes não compartilham alterações.
 
-Para GitHub, crie um repositório novo e adicione somente os arquivos deste projeto. Para Vercel, importe esse repositório; `vercel.json` configura o build `npm run build`, saída `dist` e cabeçalhos de segurança. O framework é **Other**. Não configure segredos ou integrações de produção. A política de conteúdo impede conexões da aplicação com APIs externas.
+Não insira informações reais. Não há banco remoto, captura fiscal, certificado digital, conexão bancária, upload para servidor, backup administrativo ou envio de dados a terceiros. O processamento de arquivos é limitado aos exemplos fornecidos. Storage bloqueado, cheio ou inválido produz mensagem explícita. Abas simultâneas compartilham o armazenamento: para evitar sobrescrita, use uma aba por vez.
 
+A política de conteúdo bloqueia conexões externas e scripts fora do projeto. Estilos inline permanecem permitidos porque os modais, gráficos e ajustes de posição da interface original os utilizam. Scripts inline e manipuladores inline continuam bloqueados.
+
+## GitHub e Vercel
+
+O build copia apenas a lista permitida de `scripts/files.json` para `dist`. Não há backend, banco, dados reais ou material operacional no projeto. Para GitHub, publique somente esta pasta. Na Vercel, use framework **Other**, comando `npm run build` e diretório de saída `dist`, conforme `vercel.json`. Nenhuma variável secreta é necessária.
+
+O projeto não declara concessão de licença de redistribuição do código da aplicação. A licença do ExcelJS encontra-se junto ao pacote incluído.

@@ -1,0 +1,5 @@
+[
+  "index.html", "login.html", "assets/css/styles.css", "assets/img/logo-demo.svg",
+  "assets/js/api.js", "assets/js/app.js", "assets/js/auth.js", "assets/js/cartoes.js", "assets/js/categorias.js", "assets/js/conciliacao.js", "assets/js/custosfixos.js", "assets/js/dashboard.js", "assets/js/detalhes.js", "assets/js/empresas.js", "assets/js/fiscal.js", "assets/js/historico.js", "assets/js/nfce-am.js", "assets/js/notas.js", "assets/js/recebiveis.js", "assets/js/relatorios.js", "assets/js/series.js",
+  "assets/demo/model.js", "assets/demo/reports.js", "assets/demo/browser.js", "assets/demo/demo.css", "assets/vendor/exceljs.min.js", "assets/vendor/LICENSE-exceljs.txt"
+]

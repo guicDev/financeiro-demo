@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Entrar | Controle de Notas</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+      <link rel="stylesheet" href="assets/demo/demo.css">
+  </head>
+  <body class="login-page">
+    <main class="login-shell">
+      <section class="login-logo-area" aria-label="Controle financeiro demonstrativo">
+        <img src="assets/img/logo-demo.svg" alt="Controle financeiro demonstrativo">
+      </section>
+      <section class="login-panel">
+        <span class="login-pill">Acesso ao sistema</span>
+        <h1>Bem-vindo</h1>
+        <p class="login-copy">Entre com seu usu&aacute;rio e senha para continuar o controle das notas.</p>
+        <form id="loginForm" class="login-form">
+          <label>
+            Usu&aacute;rio
+            <input name="login" autocomplete="username" required autofocus>
+          </label>
+          <label>
+            Senha
+            <input name="senha" type="password" autocomplete="current-password" required>
+          </label>
+          <button class="primary-button" type="submit">Acessar sistema</button>
+        </form>
+        <p id="loginMessage" class="form-message" aria-live="polite"></p>
+      </section>
+    </main>
+
+    <script src="assets/demo/model.js"></script>
+    <script src="assets/vendor/exceljs.min.js"></script>
+    <script src="assets/demo/reports.js"></script>
+    <script src="assets/demo/browser.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/auth.js"></script>
+  </body>
+</html>
